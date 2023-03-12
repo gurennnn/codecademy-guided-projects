@@ -1,0 +1,102 @@
+---
+title: "Predicting Income with Social Data"
+output: html_notebook
+---
+
+In this project, we will be investigating a data set collecting data related to social, economic, and health outcomes for families by getting their responses on a survey, to determine the relationship between individual characteristics, like gender or age ..., so that we could use a linear regression model to predict the labor-derived income of the survey respondents based on their characteristics.
+
+```{r message=FALSE, warning=FALSE}
+# loading packages and data
+library(ggplot2)
+library(dplyr)
+library(modelr)
+psid <- read.csv("psid_2017.csv")
+
+```
+
+```{r}
+# viewing data structure
+str(psid)
+
+# plotting age
+age_dist <- psid %>%
+  ggplot(aes(age)) +
+  geom_bar() +
+  labs(title = "The Distribution of Age", x = "Age")
+age_dist
+
+```
+We might notice that the range of our ages is too large, it's not logical to have an individual with an age of 1000 !!!<hr>
+Let's do some cleaning and filter our data to only keep ages below 75 and ages above 18, because since we are working on the labor-income, we need individuals of working age.
+
+```{r}
+# filtering to reasonable age group
+psid_clean <- psid %>%
+  filter(age >= 18, age <= 75)
+
+# plotting filtered age
+age_dist_clean <- psid_clean %>%
+  ggplot(aes(age)) +
+  geom_bar() +
+  labs(title = "The Distribution of Age", x = "Age")
+age_dist_clean
+
+```
+
+```{r}
+# plotting education
+education_boxplot <- psid_clean %>%
+  ggplot(aes(education_years)) +
+  geom_boxplot() +
+  labs(title = "Variations of Education Years", x = "Education Years")
+education_boxplot
+
+```
+One more time, we notice that there are illogical values which we should omit.
+
+```{r}
+# filtering to reasonable education levels
+psid_clean <- psid_clean %>%
+  filter(education_years >= 5, education_years <= 25)
+
+# plotting filtered education years
+education_boxplot <- psid_clean %>%
+  ggplot(aes(education_years)) +
+  geom_boxplot() +
+  labs(title = "Variations of Education Years", x = "Education Years")
+education_boxplot
+
+```
+
+```{r}
+# plotting income
+income_boxplot <- psid_clean %>%
+  ggplot(aes(labor_income)) +
+  geom_boxplot() +
+  labs(title = "Variations of Income", x = "Labor Income")
+income_boxplot
+
+```
+The scale of our plot is ugly and incomprehensible, we need to adapt it, but we don't know how yet, let's take a look at summary statistics of our income variable.
+
+```{r}
+# view income summary statistics
+summary(psid_clean$labor_income)
+
+```
+This seems like a highly skewed distribution, let's dive deeper and view the relationship of age on labor income, we will create a scatter plot to visualize the average income for each age category.
+
+```{r}
+# plotting mean income by age
+mean_income_by_age <- psid_clean %>%
+  group_by(age) %>%
+  summarise(mean_labor_income = mean(labor_income))
+
+mean_icnome_by_age_plot <- mean_income_by_age %>%
+  ggplot(aes(age, mean_labor_income)) +
+  geom_point() +
+  labs(title = "Average Income by Age", x = "Age", y = "Average Income")
+mean_icnome_by_age_plot
+
+```
+50 years and older are much more likely to have zero income, which affects the distribution of the income, and if we look at the points with the age below 50, it appears to be a linear relationship between the two variables.
